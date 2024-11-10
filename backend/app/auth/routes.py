@@ -123,3 +123,26 @@ def create_movie():
     mongo.insert_document("movies", new_movie.to_dict())
 
     return jsonify({"message": "Movie created successfully"}), 201
+
+
+@auth_bp.route("/movies", methods=["GET"])
+@token_required
+def get_movies():
+    # Pagination and sorting logic
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    sort_by = request.args.get(
+        "sort_by", "date_added"
+    )  # Default to sorting by date_added
+    sort_order = request.args.get("sort_order", "asc")  # Default to ascending order
+
+    # Build sort criteria
+    sort_direction = 1 if sort_order == "asc" else -1
+    sort_criteria = [(sort_by, sort_direction)]
+
+    # Fetch movies from MongoDB with pagination and sorting
+    movies = mongo.find_documents(
+        "movies", {}, skip=(page - 1) * per_page, limit=per_page, sort=sort_criteria
+    )
+
+    return jsonify([movie.to_dict() for movie in movies]), 200

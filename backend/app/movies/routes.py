@@ -1,7 +1,13 @@
-from flask import Blueprint, jsonify, request
+import csv
+import uuid
+from datetime import datetime
+
+from flask import Blueprint, g, jsonify, request
+from werkzeug.utils import secure_filename
 
 from backend.app import mongo
 from backend.app.auth.utils import token_required
+from backend.app.models import Movie, UploadStatus
 
 movie_bp = Blueprint("movie", __name__)
 
@@ -58,6 +64,86 @@ def list_movies():
                     "total_pages": total_pages,
                     "total_movies": total_movies,
                 },
+            }
+        ),
+        200,
+    )
+
+
+@movie_bp.route("/upload_csv", methods=["POST"])
+@token_required
+def upload_csv():
+    file = g.files.get("file")
+    if not file or not file.filename.endswith(".csv"):
+        return jsonify({"error": "Invalid file format. Please upload a CSV file."}), 400
+
+    # Generate a unique task ID for this upload
+    task_id = str(uuid.uuid4())
+
+    # Initialize upload status with the task_id
+    upload_status = UploadStatus(
+        user_id=g.user.id,
+        file_name=file.filename or "unknown",
+        status="in_progress",
+        progress=0,
+        timestamp=datetime.now(),
+        task_id=task_id,  # Store task ID in the database
+    )
+    mongo.insert_document(
+        "upload_status", upload_status.to_dict()
+    )  # Insert initial status
+
+    # Process the CSV
+    csv_reader = csv.DictReader(file.stream.decode("utf-8").splitlines())
+    total_rows = sum(1 for _ in csv_reader)
+    file.stream.seek(0)  # Reset file pointer
+    movies, uploaded_rows = [], 0
+
+    for row in csv_reader:
+        movie = Movie.from_csv(row)
+        movies.append(movie.to_dict())
+        uploaded_rows += 1
+
+        if uploaded_rows % 1000 == 0:  # Insert in batches
+            mongo.insert_many_documents("movies", movies)
+            movies.clear()
+
+            # Update progress
+            progress = (uploaded_rows / total_rows) * 100
+            mongo.update_document(
+                "upload_status",
+                {"task_id": task_id},
+                {"$set": {"progress": progress, "uploaded_rows": uploaded_rows}},
+            )
+
+    # Final insertion for remaining movies and update progress
+    if movies:
+        mongo.insert_many_documents("movies", movies)
+    mongo.update_document(
+        "upload_status",
+        {"task_id": task_id},
+        {"$set": {"status": "completed", "progress": 100}},
+    )
+
+    return jsonify({"message": "CSV upload started", "task_id": task_id}), 202
+
+
+@movie_bp.route("/upload_progress/<task_id>", methods=["GET"])
+@token_required
+def upload_progress(task_id):
+    # Retrieve upload status from MongoDB using the task_id
+    upload_status = mongo.find_document("upload_status", {"task_id": task_id})
+
+    if not upload_status:
+        return jsonify({"error": "Upload task not found"}), 404
+
+    return (
+        jsonify(
+            {
+                "status": upload_status["status"],
+                "progress": upload_status["progress"],
+                "uploaded_rows": upload_status.get("uploaded_rows", 0),
+                "file_name": upload_status["file_name"],
             }
         ),
         200,

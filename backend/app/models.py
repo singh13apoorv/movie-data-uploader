@@ -120,6 +120,7 @@ class UploadStatus(BaseModel):
     timestamp: datetime  # Timestamp when the upload status was last updated
     total_rows: Optional[int] = 0  # Total number of rows in the CSV
     uploaded_rows: Optional[int] = 0  # Number of rows successfully uploaded
+    task_id: str
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}

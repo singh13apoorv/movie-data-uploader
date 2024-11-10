@@ -55,6 +55,23 @@ class MongoConnect:
         result = collection.insert_one(document)
         return str(result.inserted_id)
 
+    def insert_many_documents(
+        self, collection_name: str, documents: List[Dict[str, Any]]
+    ) -> List[str]:
+        """
+        Summary: Insert multiple documents into the specified collection.
+
+        Args:
+            collection_name (str): The name of the collection.
+            documents (List[Dict[str, Any]]): A list of dictionaries representing the documents to insert.
+
+        Return:
+            List[str]: A list of inserted document IDs.
+        """
+        collection = self.get_collection(collection_name)
+        result = collection.insert_many(documents)
+        return [str(doc_id) for doc_id in result.inserted_ids]
+
     def count_documents(self, collection_name: str, query: Dict[str, Any]) -> int:
         """
         Summary: give count of result for a particular query.

@@ -6,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from backend.app import mongo
 from backend.app.auth.utils import create_jwt_token, token_required
 from backend.app.models import Movie, User
+from backend.app.uploads.background_tasks import process_csv
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -56,6 +57,43 @@ def login():
         return jsonify({"token": token}), 200
 
     return jsonify({"message": "Invalid credentials"}), 401
+
+
+# Route for uploading CSV
+@auth_bp.route("/uploads/upload_csv", methods=["POST"])
+@token_required
+def upload_csv():
+    # Handle CSV file upload
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    # Save the file to a temporary location
+    filename = f"uploads/{file.filename}"  # You can modify this path
+    file.save(filename)
+
+    # Start background task to process CSV (assuming Celery is used)
+    process_csv.delay(filename, g.current_user_email)
+
+    return jsonify({"message": "CSV upload started successfully"}), 202
+
+
+# Route for checking CSV upload progress
+@auth_bp.route("/uploads/progress", methods=["GET"])
+@token_required
+def upload_progress():
+    # Get the current progress of the CSV processing
+    # Assuming you track the status in a MongoDB collection
+    progress_data = mongo.find_document(
+        "uploads_progress", {"user_email": g.current_user_email}
+    )
+
+    if progress_data:
+        return jsonify(progress_data), 200
+    return jsonify({"message": "No active uploads found"}), 404
 
 
 # Movies list with pagination and sorting

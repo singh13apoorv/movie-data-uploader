@@ -58,76 +58,10 @@ def login():
     return jsonify({"message": "Invalid credentials"}), 401
 
 
+# Movies list with pagination and sorting
 @auth_bp.route("/movies", methods=["GET"])
-@token_required  # Protect this route with authentication
+@token_required
 def list_movies():
-    # Access the authenticated user's email from g
-    user_email = g.current_user_email
-    user = User.find_by_email(user_email)
-
-    if user:
-        # Assuming you have a method to fetch movies uploaded by the user
-        user_movies = mongo.find_documents("movies", {"user_email": user_email})
-        return jsonify({"movies": user_movies}), 200
-
-    return jsonify({"message": "User not found"}), 404
-
-
-@auth_bp.route("/movies", methods=["POST"])
-@token_required
-def create_movie():
-    data = request.get_json()  # Expecting a JSON body with movie details
-
-    # Validate required fields
-    required_fields = [
-        "show_id",
-        "movie_type",
-        "title",
-        "director",
-        "cast",
-        "country",
-        "date_added",
-        "release_year",
-        "rating",
-        "duration",
-        "listed_in",
-        "description",
-    ]
-    if not all(field in data for field in required_fields):
-        return (
-            jsonify(
-                {
-                    "error": f"Missing one or more required fields: {', '.join(required_fields)}"
-                }
-            ),
-            400,
-        )
-
-    # Create a new Movie instance
-    new_movie = Movie(
-        show_id=data["show_id"],
-        movie_type=data["movie_type"],
-        title=data["title"],
-        director=data["director"],
-        cast=data["cast"],
-        country=data["country"],
-        date_added=datetime.strptime(data["date_added"], "%Y-%m-%dT%H:%M:%S.%fZ"),
-        release_year=data["release_year"],
-        rating=data["rating"],
-        duration=data["duration"],
-        listed_in=data["listed_in"],
-        description=data["description"],
-    )
-
-    # Insert the new movie into MongoDB
-    mongo.insert_document("movies", new_movie.to_dict())
-
-    return jsonify({"message": "Movie created successfully"}), 201
-
-
-@auth_bp.route("/movies", methods=["GET"])
-@token_required
-def get_movies():
     # Pagination and sorting logic
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 20))
@@ -147,53 +81,3 @@ def get_movies():
     )
 
     return jsonify([movie for movie in movies]), 200
-
-
-@auth_bp.route("/movies/<show_id>", methods=["GET"])
-@token_required
-def get_movie(show_id):
-    # Fetch the movie from MongoDB
-    movie_data = mongo.find_document("movies", {"show_id": show_id})
-
-    if not movie_data:
-        return jsonify({"error": "Movie not found"}), 404
-
-    # Convert the fetched data into a Movie instance
-    movie = Movie(**movie_data)  # This assumes mongo.find_document returns a dictionary
-
-    return jsonify(movie.to_dict()), 200
-
-
-@auth_bp.route("/movies/<show_id>", methods=["PUT"])
-@token_required
-def update_movie(show_id):
-    data = request.get_json()
-
-    # Find the movie in the database
-    movie = mongo.find_document("movies", {"show_id": show_id})
-
-    if not movie:
-        return jsonify({"error": "Movie not found"}), 404
-
-    # Update the movie fields (replace this with the fields you need to update)
-    updated_fields = {
-        field: data[field] for field in data if field in Movie.__annotations__
-    }
-    mongo.update_document("movies", {"show_id": show_id}, {"$set": updated_fields})
-
-    return jsonify({"message": "Movie updated successfully"}), 200
-
-
-@auth_bp.route("/movies/<show_id>", methods=["DELETE"])
-@token_required
-def delete_movie(show_id):
-    # Find the movie in the database
-    movie = mongo.find_document("movies", {"show_id": show_id})
-
-    if not movie:
-        return jsonify({"error": "Movie not found"}), 404
-
-    # Delete the movie from MongoDB
-    mongo.delete_document("movies", {"show_id": show_id})
-
-    return jsonify({"message": "Movie deleted successfully"}), 200

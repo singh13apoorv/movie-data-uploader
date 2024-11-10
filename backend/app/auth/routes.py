@@ -71,3 +71,55 @@ def list_movies():
         return jsonify({"movies": user_movies}), 200
 
     return jsonify({"message": "User not found"}), 404
+
+
+@auth_bp.route("/movies", methods=["POST"])
+@token_required
+def create_movie():
+    data = request.get_json()  # Expecting a JSON body with movie details
+
+    # Validate required fields
+    required_fields = [
+        "show_id",
+        "movie_type",
+        "title",
+        "director",
+        "cast",
+        "country",
+        "date_added",
+        "release_year",
+        "rating",
+        "duration",
+        "listed_in",
+        "description",
+    ]
+    if not all(field in data for field in required_fields):
+        return (
+            jsonify(
+                {
+                    "error": f"Missing one or more required fields: {', '.join(required_fields)}"
+                }
+            ),
+            400,
+        )
+
+    # Create a new Movie instance
+    new_movie = Movie(
+        show_id=data["show_id"],
+        movie_type=data["movie_type"],
+        title=data["title"],
+        director=data["director"],
+        cast=data["cast"],
+        country=data["country"],
+        date_added=datetime.strptime(data["date_added"], "%Y-%m-%dT%H:%M:%S.%fZ"),
+        release_year=data["release_year"],
+        rating=data["rating"],
+        duration=data["duration"],
+        listed_in=data["listed_in"],
+        description=data["description"],
+    )
+
+    # Insert the new movie into MongoDB
+    mongo.insert_document("movies", new_movie.to_dict())
+
+    return jsonify({"message": "Movie created successfully"}), 201

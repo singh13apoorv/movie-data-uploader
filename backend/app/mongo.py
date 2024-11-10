@@ -75,6 +75,7 @@ class MongoConnect:
         collection_name: str,
         query: Dict[str, Any] = {},
         sort: Optional[str] = None,
+        skip: int = 0,
         limit: int = 0,
     ) -> List[Dict[str, Any]]:
         """
@@ -91,6 +92,11 @@ class MongoConnect:
         """
         collection = self.get_collection(collection_name)
         cursor = collection.find(query).limit(limit)
+
+        if skip > 0:
+            cursor = cursor.skip(skip)
+        if limit > 0:
+            cursor = cursor.limit(limit)
         if sort:
             cursor = cursor.sort(sort)
         return list(cursor)

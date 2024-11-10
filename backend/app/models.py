@@ -4,6 +4,8 @@ from typing import List, Optional
 from pydantic import BaseModel, EmailStr
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from backend.app import mongo  # Import your MongoDB connection
+
 
 class User(BaseModel):
     """
@@ -47,6 +49,18 @@ class User(BaseModel):
             password (str): password to check.
         """
         return check_password_hash(self.password_hash, password)
+
+    @classmethod
+    def find_by_email(cls, email: str):
+        """
+        Fetch a user document from the database by email.
+        """
+        user_data = mongo.db.users.find_one(
+            {"email": email}
+        )  # Use your MongoDB connection here
+        if user_data:
+            return cls(**user_data)  # Return an instance of User
+        return None  # Return None if no user found
 
 
 class Movie(BaseModel):

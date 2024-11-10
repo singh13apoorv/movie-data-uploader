@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from flask import Blueprint, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from backend.app import mongo
-from backend.app.auth.utils import create_jwt_token, token_required
-from backend.app.models import User
+from app import mongo
+from app.auth.utils import create_jwt_token, token_required
+from app.models import User
 
 auth_bp = Blueprint("auth", __name__)
 

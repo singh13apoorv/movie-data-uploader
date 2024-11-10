@@ -5,7 +5,7 @@ from flask import g
 from pydantic import BaseModel, EmailStr
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from backend.app import mongo  # Import your MongoDB connection
+from app import mongo  # Import your MongoDB connection
 
 
 class User(BaseModel):

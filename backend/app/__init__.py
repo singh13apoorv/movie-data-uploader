@@ -1,7 +1,7 @@
 from flask import Flask, g
 from flask_pymongo import pymongo
 
-from backend.app.mongo import MongoConnect
+from app.mongo import MongoConnect
 
 
 def create_app(config_name="development"):
@@ -23,8 +23,8 @@ def create_app(config_name="development"):
             g.mongo.close_connection()
 
     # Register blueprints (authentication, movies, etc.)
-    from backend.app.auth.routes import auth_bp
-    from backend.app.movies.routes import movie_bp
+    from app.auth.routes import auth_bp
+    from app.movies.routes import movie_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(movie_bp, url_prefix="/movies")

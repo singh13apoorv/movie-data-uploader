@@ -7,7 +7,7 @@ import jwt
 from flask import g, jsonify, request
 from werkzeug.utils import secure_filename
 
-from backend.app import app
+from app import app
 
 # Secret key for encoding and decoding JWT tokens
 SECRET_KEY = os.urandom(32).hex()

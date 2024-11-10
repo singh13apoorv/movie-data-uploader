@@ -5,9 +5,9 @@ from datetime import datetime
 from flask import Blueprint, g, jsonify, request
 from werkzeug.utils import secure_filename
 
-from backend.app import mongo
-from backend.app.auth.utils import token_required
-from backend.app.models import Movie, UploadStatus
+from app import mongo
+from app.auth.utils import token_required
+from app.models import Movie, UploadStatus
 
 movie_bp = Blueprint("movie", __name__)
 

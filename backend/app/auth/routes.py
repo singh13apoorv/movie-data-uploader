@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.app import mongo
-from backend.app.auth.utils import create_jwt_token
-from backend.app.models import User
+from backend.app.auth.utils import create_jwt_token, token_required
+from backend.app.models import Movie, User
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -56,3 +56,28 @@ def login():
         return jsonify({"token": token}), 200
 
     return jsonify({"message": "Invalid credentials"}), 401
+
+
+# Movies list with pagination and sorting
+@auth_bp.route("/movies", methods=["GET"])
+@token_required
+def list_movies():
+    # Pagination and sorting logic
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    sort_by = request.args.get(
+        "sort_by", "date_added"
+    )  # Default to sorting by date_added
+    sort_order = request.args.get("sort_order", "asc")  # Default to ascending order
+
+    # Build sort criteria
+    sort_direction = 1 if sort_order == "asc" else -1
+    sort_criteria = [(sort_by, sort_direction)]
+
+    # Fetch movies from MongoDB with pagination and sorting
+    skip = (page - 1) * per_page
+    movies = mongo.find_documents(
+        "movies", query={}, sort=sort_criteria, skip=skip, limit=per_page
+    )
+
+    return jsonify([movie for movie in movies]), 200

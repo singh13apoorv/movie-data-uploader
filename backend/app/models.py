@@ -55,8 +55,8 @@ class User(BaseModel):
         """
         Fetch a user document from the database by email.
         """
-        user_data = mongo.db.users.find_one(
-            {"email": email}
+        user_data = mongo.find_document(
+            "users", {"email": email}
         )  # Use your MongoDB connection here
         if user_data:
             return cls(**user_data)  # Return an instance of User

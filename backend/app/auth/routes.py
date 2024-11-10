@@ -5,7 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.app import mongo
 from backend.app.auth.utils import create_jwt_token, token_required
-from backend.app.models import User
+from backend.app.models import Movie, User
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -141,8 +141,59 @@ def get_movies():
     sort_criteria = [(sort_by, sort_direction)]
 
     # Fetch movies from MongoDB with pagination and sorting
+    skip = (page - 1) * per_page
     movies = mongo.find_documents(
-        "movies", {}, skip=(page - 1) * per_page, limit=per_page, sort=sort_criteria
+        "movies", query={}, sort=sort_criteria, skip=skip, limit=per_page
     )
 
-    return jsonify([movie.to_dict() for movie in movies]), 200
+    return jsonify([movie for movie in movies]), 200
+
+
+@auth_bp.route("/movies/<show_id>", methods=["GET"])
+@token_required
+def get_movie(show_id):
+    # Fetch the movie from MongoDB
+    movie_data = mongo.find_document("movies", {"show_id": show_id})
+
+    if not movie_data:
+        return jsonify({"error": "Movie not found"}), 404
+
+    # Convert the fetched data into a Movie instance
+    movie = Movie(**movie_data)  # This assumes mongo.find_document returns a dictionary
+
+    return jsonify(movie.to_dict()), 200
+
+
+@auth_bp.route("/movies/<show_id>", methods=["PUT"])
+@token_required
+def update_movie(show_id):
+    data = request.get_json()
+
+    # Find the movie in the database
+    movie = mongo.find_document("movies", {"show_id": show_id})
+
+    if not movie:
+        return jsonify({"error": "Movie not found"}), 404
+
+    # Update the movie fields (replace this with the fields you need to update)
+    updated_fields = {
+        field: data[field] for field in data if field in Movie.__annotations__
+    }
+    mongo.update_document("movies", {"show_id": show_id}, {"$set": updated_fields})
+
+    return jsonify({"message": "Movie updated successfully"}), 200
+
+
+@auth_bp.route("/movies/<show_id>", methods=["DELETE"])
+@token_required
+def delete_movie(show_id):
+    # Find the movie in the database
+    movie = mongo.find_document("movies", {"show_id": show_id})
+
+    if not movie:
+        return jsonify({"error": "Movie not found"}), 404
+
+    # Delete the movie from MongoDB
+    mongo.delete_document("movies", {"show_id": show_id})
+
+    return jsonify({"message": "Movie deleted successfully"}), 200

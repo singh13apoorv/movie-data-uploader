@@ -37,7 +37,7 @@ def signup():
     )
 
     # Save the new user to MongoDB
-    mongo.insert_document("users", new_user.to_dict())  # Insert user into MongoDB
+    g.mongo.insert_document("users", new_user.to_dict())  # Insert user into MongoDB
 
     return jsonify({"message": "User registered successfully"}), 201
 
@@ -76,7 +76,7 @@ def list_movies():
 
     # Fetch movies from MongoDB with pagination and sorting
     skip = (page - 1) * per_page
-    movies = mongo.find_documents(
+    movies = g.mongo.find_documents(
         "movies", query={}, sort=sort_criteria, skip=skip, limit=per_page
     )
 

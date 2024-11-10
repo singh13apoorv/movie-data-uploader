@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
+from flask import g
 from pydantic import BaseModel, EmailStr
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -55,7 +56,7 @@ class User(BaseModel):
         """
         Fetch a user document from the database by email.
         """
-        user_data = mongo.find_document(
+        user_data = g.mongo.find_document(
             "users", {"email": email}
         )  # Use your MongoDB connection here
         if user_data:

@@ -1,12 +1,32 @@
-from flask import Flask
+from flask import Flask, g
 from flask_pymongo import pymongo
 
 from backend.app.mongo import MongoConnect
 
-# initialize the flask app
-app = Flask(__name__)
 
-# configure your mongodb connection string (make sure it's in the config)
-mongo = MongoConnect()
+def create_app(config_name="development"):
+    """Create and configure the Flask app."""
 
-# Now you can use mongo.db in your other modules for database access
+    # Initialize Flask app
+    app = Flask(__name__)
+
+    @app.before_request
+    def before_request():
+        """Set up the MongoDB connection before each request."""
+        g.mongo = MongoConnect()
+
+    # Register after_request to close the MongoDB connection after each request
+    @app.teardown_appcontext
+    def close_mongo_connection(exception=None):
+        """Close the MongoDB connection after each request."""
+        if hasattr(g, "mongo"):
+            g.mongo.close_connection()
+
+    # Register blueprints (authentication, movies, etc.)
+    from backend.app.auth.routes import auth_bp
+    from backend.app.movies.routes import movie_bp
+
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(movie_bp, url_prefix="/movies")
+
+    return app

@@ -47,12 +47,12 @@ def list_movies():
     skip = (page - 1) * per_page
 
     # Fetch movies from MongoDB with pagination and sorting
-    movies = mongo.find_documents(
+    movies = g.mongo.find_documents(
         "movies", query={}, sort=sort_criteria, skip=skip, limit=per_page
     )
 
     # Get total count for pagination metadata
-    total_movies = mongo.count_documents("movies", query={})
+    total_movies = g.mongo.count_documents("movies", query={})
     total_pages = (total_movies // per_page) + (1 if total_movies % per_page else 0)
 
     return (
@@ -89,7 +89,7 @@ def upload_csv():
         timestamp=datetime.now(),
         task_id=task_id,  # Store task ID in the database
     )
-    mongo.insert_document(
+    g.mongo.insert_document(
         "upload_status", upload_status.to_dict()
     )  # Insert initial status
 
@@ -105,12 +105,12 @@ def upload_csv():
         uploaded_rows += 1
 
         if uploaded_rows % 1000 == 0:  # Insert in batches
-            mongo.insert_many_documents("movies", movies)
+            g.mongo.insert_many_documents("movies", movies)
             movies.clear()
 
             # Update progress
             progress = (uploaded_rows / total_rows) * 100
-            mongo.update_document(
+            g.mongo.update_document(
                 "upload_status",
                 {"task_id": task_id},
                 {"$set": {"progress": progress, "uploaded_rows": uploaded_rows}},
@@ -118,8 +118,8 @@ def upload_csv():
 
     # Final insertion for remaining movies and update progress
     if movies:
-        mongo.insert_many_documents("movies", movies)
-    mongo.update_document(
+        g.mongo.insert_many_documents("movies", movies)
+    g.mongo.update_document(
         "upload_status",
         {"task_id": task_id},
         {"$set": {"status": "completed", "progress": 100}},
@@ -132,7 +132,7 @@ def upload_csv():
 @token_required
 def upload_progress(task_id):
     # Retrieve upload status from MongoDB using the task_id
-    upload_status = mongo.find_document("upload_status", {"task_id": task_id})
+    upload_status = g.mongo.find_document("upload_status", {"task_id": task_id})
 
     if not upload_status:
         return jsonify({"error": "Upload task not found"}), 404

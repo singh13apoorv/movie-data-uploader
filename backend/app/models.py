@@ -2,6 +2,9 @@ from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from backend.app import mongo  # Import your MongoDB connection
 
 
 class User(BaseModel):
@@ -11,7 +14,7 @@ class User(BaseModel):
 
     email: EmailStr  # Unique identifier for the user
     password_hash: str  # Hashed password for secure authentication
-    full_name: str  # Full name of the user
+    full_name: Optional[str] = None  # Full name of the user
     date_joined: datetime  # Date when the user signed up
     last_login: Optional[datetime] = None  # Last login timestamp
     is_active: bool = True  # Whether the user account is active
@@ -24,8 +27,40 @@ class User(BaseModel):
         json_encoders = {datetime: lambda v: v.isoformat()}
 
     def to_dict(self) -> dict:
-        """Convert the User model to a dictionary."""
+        """
+        Summary: Convert the User model to a dictionary.
+        """
         return self.model_dump()
+
+    def set_password(self, password: str):
+        """
+        Summary: Hash and set the password.
+
+        Args:
+            password (str): password to set.
+        """
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        """
+        Summary: Verify the password against the hashed value.
+
+        Args:
+            password (str): password to check.
+        """
+        return check_password_hash(self.password_hash, password)
+
+    @classmethod
+    def find_by_email(cls, email: str):
+        """
+        Fetch a user document from the database by email.
+        """
+        user_data = mongo.find_document(
+            "users", {"email": email}
+        )  # Use your MongoDB connection here
+        if user_data:
+            return cls(**user_data)  # Return an instance of User
+        return None  # Return None if no user found
 
 
 class Movie(BaseModel):

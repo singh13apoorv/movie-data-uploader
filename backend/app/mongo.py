@@ -5,7 +5,7 @@ from pymongo.collection import Collection
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-uri = f"mongodb+srv://singh13apoorv:XETTcALhmWfzBXIx@cluster0.qsk4j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+uri = "mongodb+srv://singh13apoorv:XETTcALhmWfzBXIx@cluster0.qsk4j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 MONGO_URI = os.getenv("MONGO_URI", uri)
 DATABASE = os.getenv("DATABASE_NAME", "imdb_database")
 
@@ -76,7 +76,7 @@ class MongoConnect:
         query: Dict[str, Any] = {},
         sort: Optional[str] = None,
         limit: int = 0,
-    ) -> List:
+    ) -> List[Dict[str, Any]]:
         """
         Summary: Find multiple documents in the specified collection.
 

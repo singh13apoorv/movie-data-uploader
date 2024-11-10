@@ -55,6 +55,19 @@ class MongoConnect:
         result = collection.insert_one(document)
         return str(result.inserted_id)
 
+    def count_documents(self, collection_name: str, query: Dict[str, Any]) -> int:
+        """
+        Summary: give count of result for a particular query.
+
+        Args:
+            collection_name (str): name of the collection.
+            query (Dict[str, Any]): query.
+        Return:
+            int: count of result from query.
+        """
+        collection = self.get_collection(collection_name)
+        return collection.count_documents(query)
+
     def find_document(
         self, collection_name: str, query: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:

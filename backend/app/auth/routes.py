@@ -37,7 +37,7 @@ def signup():
     )
 
     # Save the new user to MongoDB
-    mongo.db.users.insert_one(new_user.to_dict())  # Insert user into MongoDB
+    mongo.insert_document("users", new_user.to_dict())  # Insert user into MongoDB
 
     return jsonify({"message": "User registered successfully"}), 201
 
@@ -50,8 +50,9 @@ def login():
     password = data.get("password")
 
     # Retrieve the user from MongoDB
-    user = User.find_by_email(email)  # Make sure `find_by_email` is defined
-    if user and check_password_hash(user.password_hash, password):
+    user = User.find_by_email(email)  # Ensure `find_by_email` is defined properly
+    if user and user.check_password(password):
         token = create_jwt_token(user.email)  # Create token on successful login
         return jsonify({"token": token}), 200
+
     return jsonify({"message": "Invalid credentials"}), 401

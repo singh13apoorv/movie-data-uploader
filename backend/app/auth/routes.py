@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.app import mongo
-from backend.app.auth.utils import create_jwt_token
+from backend.app.auth.utils import create_jwt_token, token_required
 from backend.app.models import User
 
 auth_bp = Blueprint("auth", __name__)
@@ -56,3 +56,18 @@ def login():
         return jsonify({"token": token}), 200
 
     return jsonify({"message": "Invalid credentials"}), 401
+
+
+@auth_bp.route("/movies", methods=["GET"])
+@token_required  # Protect this route with authentication
+def list_movies():
+    # Access the authenticated user's email from g
+    user_email = g.current_user_email
+    user = User.find_by_email(user_email)
+
+    if user:
+        # Assuming you have a method to fetch movies uploaded by the user
+        user_movies = mongo.find_documents("movies", {"user_email": user_email})
+        return jsonify({"movies": user_movies}), 200
+
+    return jsonify({"message": "User not found"}), 404

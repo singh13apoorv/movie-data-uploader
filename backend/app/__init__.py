@@ -1,10 +1,10 @@
-from flask import flask
+from flask import Flask
 from flask_pymongo import pymongo
 
 from backend.app.mongo import MongoConnect
 
 # initialize the flask app
-app = flask(__name__)
+app = Flask(__name__)
 
 # configure your mongodb connection string (make sure it's in the config)
 mongo = MongoConnect()

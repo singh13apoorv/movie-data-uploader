@@ -74,7 +74,7 @@ class MongoConnect:
         self,
         collection_name: str,
         query: Dict[str, Any] = {},
-        sort: Optional[str] = None,
+        sort: Optional[List[tuple]] = None,
         skip: int = 0,
         limit: int = 0,
     ) -> List[Dict[str, Any]]:

@@ -1,17 +1,30 @@
-import csv
-import uuid
-from datetime import datetime
-
-from flask import Blueprint, g, jsonify, request
+import logging
 
 from app.auth.utils import token_required
-from app.models import Movie, UploadStatus
+from flask import Blueprint, g, jsonify, request
+from flask_cors import cross_origin
 
 movie_bp = Blueprint("movie", __name__)
+logging.basicConfig(level=logging.INFO)
+
+from bson import ObjectId
+
+
+# Helper function to convert ObjectId to string
+def convert_objectid(obj):
+    """Recursively converts ObjectId to string in dictionaries and lists."""
+    if isinstance(obj, ObjectId):
+        return str(obj)  # Convert ObjectId to string
+    elif isinstance(obj, dict):
+        return {key: convert_objectid(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_objectid(item) for item in obj]
+    return obj
 
 
 # Route for listing movies with pagination and sorting
-@movie_bp.route("/", methods=["GET"])
+@movie_bp.route("/movie_dashboard", methods=["OPTIONS", "GET"])
+@cross_origin(origins=["http://localhost:3000", "http://127.0.0.1:3000"])
 @token_required
 def list_movies():
     """
@@ -22,127 +35,79 @@ def list_movies():
     - sort_by (str): The field by which to sort the movies (default is "date_added")
     - sort_order (str): The sorting order (default is "asc")
     """
-    # Fetch query parameters for pagination and sorting
-    page = int(request.args.get("page", 1))
-    per_page = int(request.args.get("per_page", 20))
-    sort_by = request.args.get("sort_by", "date_added")  # Default sorting by date_added
-    sort_order = request.args.get(
-        "sort_order", "asc"
-    )  # Default sorting order is ascending
+    try:
+        # Fetch query parameters for pagination and sorting
+        page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 20))
+        sort_by = request.args.get(
+            "sort_by", "date_added"
+        )  # Default sorting by date_added
+        sort_order = request.args.get(
+            "sort_order", "asc"
+        )  # Default sorting order is ascending
 
-    # Map the sorting fields to their corresponding MongoDB fields
-    sort_fields = {
-        "date_added": "date_added",  # Sort by the date the movie was added
-        "release_date": "release_date",  # Sort by release date
-        "duration": "duration",  # Sort by movie duration (e.g., in minutes)
-    }
+        # Log query parameters
+        logging.info(
+            f"Received parameters: page={page}, per_page={per_page}, sort_by={sort_by}, sort_order={sort_order}"
+        )
 
-    # Determine the sort direction (ascending or descending)
-    sort_direction = 1 if sort_order == "asc" else -1
-    sort_criteria = [(sort_fields.get(sort_by, "date_added"), sort_direction)]
+        # Map the sorting fields to their corresponding MongoDB fields
+        sort_fields = {
+            "date_added": "date_added",  # Sort by the date the movie was added
+            "release_date": "release_date",  # Sort by release date
+            "duration": "duration",  # Sort by movie duration (e.g., in minutes)
+        }
 
-    # Calculate the skip value for pagination
-    skip = (page - 1) * per_page
-
-    # Fetch movies from MongoDB with pagination and sorting
-    movies = g.mongo.find_documents(
-        "movies", query={}, sort=sort_criteria, skip=skip, limit=per_page
-    )
-
-    # Get total count for pagination metadata
-    total_movies = g.mongo.count_documents("movies", query={})
-    total_pages = (total_movies // per_page) + (1 if total_movies % per_page else 0)
-
-    return (
-        jsonify(
-            {
-                "movies": [movie for movie in movies],
-                "pagination": {
-                    "current_page": page,
-                    "total_pages": total_pages,
-                    "total_movies": total_movies,
-                },
-            }
-        ),
-        200,
-    )
-
-
-@movie_bp.route("/upload_csv", methods=["POST"])
-@token_required
-def upload_csv():
-    file = g.files.get("file")
-    if not file or not file.filename.endswith(".csv"):
-        return jsonify({"error": "Invalid file format. Please upload a CSV file."}), 400
-
-    # Generate a unique task ID for this upload
-    task_id = str(uuid.uuid4())
-
-    # Initialize upload status with the task_id
-    upload_status = UploadStatus(
-        user_id=g.user.id,
-        file_name=file.filename or "unknown",
-        status="in_progress",
-        progress=0,
-        timestamp=datetime.now(),
-        task_id=task_id,  # Store task ID in the database
-    )
-    g.mongo.insert_document(
-        "upload_status", upload_status.to_dict()
-    )  # Insert initial status
-
-    # Process the CSV
-    csv_reader = csv.DictReader(file.stream.decode("utf-8").splitlines())
-    total_rows = sum(1 for _ in csv_reader)
-    file.stream.seek(0)  # Reset file pointer
-    movies, uploaded_rows = [], 0
-
-    for row in csv_reader:
-        movie = Movie.from_csv(row)
-        movies.append(movie.to_dict())
-        uploaded_rows += 1
-
-        if uploaded_rows % 1000 == 0:  # Insert in batches
-            g.mongo.insert_many_documents("movies", movies)
-            movies.clear()
-
-            # Update progress
-            progress = (uploaded_rows / total_rows) * 100
-            g.mongo.update_document(
-                "upload_status",
-                {"task_id": task_id},
-                {"$set": {"progress": progress, "uploaded_rows": uploaded_rows}},
+        # Ensure sort_by is a valid field
+        if sort_by not in sort_fields:
+            sort_by = "date_added"
+            logging.warning(
+                f"Invalid 'sort_by' parameter received: {sort_by}. Defaulting to 'date_added'."
             )
 
-    # Final insertion for remaining movies and update progress
-    if movies:
-        g.mongo.insert_many_documents("movies", movies)
-    g.mongo.update_document(
-        "upload_status",
-        {"task_id": task_id},
-        {"$set": {"status": "completed", "progress": 100}},
-    )
+        # Determine the sort direction (ascending or descending)
+        sort_direction = 1 if sort_order == "asc" else -1
+        sort_criteria = [(sort_fields.get(sort_by, "date_added"), sort_direction)]
 
-    return jsonify({"message": "CSV upload started", "task_id": task_id}), 202
+        # Log the sorting criteria
+        logging.info(f"Sorting criteria: {sort_criteria}")
 
+        # Calculate the skip value for pagination
+        skip = (page - 1) * per_page
+        logging.info(f"Pagination: skip={skip}, limit={per_page}")
 
-@movie_bp.route("/upload_progress/<task_id>", methods=["GET"])
-@token_required
-def upload_progress(task_id):
-    # Retrieve upload status from MongoDB using the task_id
-    upload_status = g.mongo.find_document("upload_status", {"task_id": task_id})
+        # Fetch movies from MongoDB with pagination and sorting
+        movies = g.mongo.find_documents(
+            "movies", query={}, sort=sort_criteria, skip=skip, limit=per_page
+        )
 
-    if not upload_status:
-        return jsonify({"error": "Upload task not found"}), 404
+        # Log number of movies fetched
+        logging.info(f"Fetched {len(movies)} movies")
 
-    return (
-        jsonify(
-            {
-                "status": upload_status["status"],
-                "progress": upload_status["progress"],
-                "uploaded_rows": upload_status.get("uploaded_rows", 0),
-                "file_name": upload_status["file_name"],
-            }
-        ),
-        200,
-    )
+        # Get total count for pagination metadata
+        total_movies = g.mongo.count_documents("movies", query={})
+        total_pages = (total_movies // per_page) + (1 if total_movies % per_page else 0)
+
+        # Log pagination metadata
+        logging.info(f"Total movies: {total_movies}, Total pages: {total_pages}")
+
+        # Convert ObjectId to string for all movies
+        serialized_movies = [convert_objectid(movie) for movie in movies]
+
+        return (
+            jsonify(
+                {
+                    "movies": serialized_movies,
+                    "pagination": {
+                        "current_page": page,
+                        "total_pages": total_pages,
+                        "total_movies": total_movies,
+                    },
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logging.error(f"Error in list_movies: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500

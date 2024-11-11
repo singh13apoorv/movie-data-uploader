@@ -1,0 +1,327 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body and General Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  line-height: 1.6;
+}
+
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 1rem;
+  text-align: center;
+}
+
+header h1 {
+  margin-bottom: 10px;
+}
+
+#user-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+#user-info #username {
+  margin-right: 20px;
+}
+
+#logout-btn {
+  padding: 5px 15px;
+  background-color: #ff6f61;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+#logout-btn:hover {
+  background-color: #ff4f3f;
+}
+
+/* Upload Section */
+#upload-section {
+  margin: 2rem auto;
+  width: 80%;
+  max-width: 600px;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#upload-section h2 {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+#csv-upload-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#csv-upload-form label {
+  margin-bottom: 10px;
+}
+
+#csv-upload-form input[type="file"] {
+  margin-bottom: 20px;
+}
+
+#upload-btn {
+  padding: 10px 20px;
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+#upload-btn:hover {
+  background-color: #45a049;
+}
+
+/* Progress Section */
+#upload-progress {
+  margin-top: 20px;
+  text-align: center;
+}
+
+#upload-progress p {
+  font-size: 1.1rem;
+}
+
+/* Movie List Section */
+#movies-section {
+  margin: 2rem auto;
+  width: 80%;
+  max-width: 900px;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#movies-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#sorting-options {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+#sorting-options select {
+  padding: 5px;
+  margin-right: 10px;
+  font-size: 1rem;
+}
+
+/* Movie List Styling */
+#movie-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+#movie-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 1.1rem;
+}
+
+#movie-list li:last-child {
+  border-bottom: none;
+}
+
+/* Pagination Controls */
+#pagination {
+  text-align: center;
+  margin-top: 20px;
+}
+
+#pagination button {
+  padding: 5px 10px;
+  margin: 0 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#pagination button:hover {
+  background-color: #0056b3;
+}
+
+#pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* General Reset and Layout */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+/* Header */
+header {
+  background-color: #007bff;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 2em;
+}
+
+#user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+#username {
+  font-size: 1em;
+}
+
+#logout-btn {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+#logout-btn:hover {
+  background-color: #ff3333;
+}
+
+/* Sorting Controls */
+#sorting-controls {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#sorting-controls label {
+  font-size: 1.2em;
+}
+
+#sorting-controls select {
+  padding: 5px;
+  font-size: 1em;
+}
+
+#sorting-controls button {
+  background-color: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+#sorting-controls button:hover {
+  background-color: #0056b3;
+}
+
+/* Main Content */
+main {
+  margin-top: 30px;
+}
+
+#movies-list-section {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#movies-list-section h2 {
+  font-size: 1.8em;
+  margin-bottom: 20px;
+}
+
+#movies-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+#movies-table th,
+#movies-table td {
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+#movies-table th {
+  background-color: #007bff;
+  color: white;
+}
+
+#movies-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Pagination */
+#pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+#pagination button {
+  background-color: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+#pagination button:hover {
+  background-color: #0056b3;
+}
+
+#pagination button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+#page-number {
+  font-size: 1.2em;
+  color: #333;
+}

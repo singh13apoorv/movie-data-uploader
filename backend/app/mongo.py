@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from pymongo.collection import Collection
 from pymongo.mongo_client import MongoClient
@@ -103,33 +103,52 @@ class MongoConnect:
     def find_documents(
         self,
         collection_name: str,
-        query: Dict[str, Any] = {},
-        sort: Optional[List[tuple]] = None,
+        query: Optional[Dict[str, Any]] = None,
+        sort: Optional[List[Tuple[str, int]]] = None,
         skip: int = 0,
         limit: int = 0,
     ) -> List[Dict[str, Any]]:
         """
-        Summary: Find multiple documents in the specified collection.
+        Summary: Find multiple documents in the specified collection with pagination and sorting.
 
         Args:
-            collection_name (str): name of the collection.
-            query (Dict[str, Any]): query dictionary.
-            sort (str): Order you want your data in.
-            limit (int): The number of data you want.
+            collection_name (str): Name of the collection.
+            query (Dict[str, Any], optional): Query dictionary. Defaults to an empty dictionary if not provided.
+            sort (List[Tuple[str, int]], optional): A list of tuples specifying the sorting criteria. Each tuple is
+                                                    (field_name, sort_order) where sort_order is 1 for ascending and -1 for descending.
+            skip (int, optional): Number of documents to skip. Defaults to 0.
+            limit (int, optional): Number of documents to limit the result to. Defaults to 0 (no limit).
 
-        Return:
-            List: returns list of quried data.
+        Returns:
+            List: A list of documents matching the query criteria, with pagination and sorting applied.
         """
-        collection = self.get_collection(collection_name)
-        cursor = collection.find(query).limit(limit)
+        # Default the query if it's None
+        if query is None:
+            query = {}
 
+        # Get the collection
+        collection = self.get_collection(collection_name)
+
+        # Build the cursor
+        cursor = collection.find(query)
+
+        # Apply skip if greater than 0
         if skip > 0:
             cursor = cursor.skip(skip)
+
+        # Apply limit if greater than 0
         if limit > 0:
             cursor = cursor.limit(limit)
+
+        # Apply sorting if provided
         if sort:
             cursor = cursor.sort(sort)
-        return list(cursor)
+
+        # Convert the cursor to a list and return
+        result = list(cursor)
+
+        # Log the query and results
+        return result
 
     def update_document(
         self, collection_name: str, query: Dict[str, Any], update_data: Dict[str, Any]

@@ -3,9 +3,7 @@ import uuid
 from datetime import datetime
 
 from flask import Blueprint, g, jsonify, request
-from werkzeug.utils import secure_filename
 
-from app import mongo
 from app.auth.utils import token_required
 from app.models import Movie, UploadStatus
 

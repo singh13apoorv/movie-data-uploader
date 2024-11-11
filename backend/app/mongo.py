@@ -5,9 +5,8 @@ from pymongo.collection import Collection
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-uri = "mongodb+srv://singh13apoorv:XETTcALhmWfzBXIx@cluster0.qsk4j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-MONGO_URI = os.getenv("MONGO_URI", uri)
-DATABASE = os.getenv("DATABASE_NAME", "imdb_database")
+MONGO_URI = os.getenv("MONGO_URI")
+DATABASE = os.getenv("DATABASE_NAME")
 
 
 class MongoConnect:

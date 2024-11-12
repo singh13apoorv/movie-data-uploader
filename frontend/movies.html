@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movies List</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Movie List</h1>
+      <div id="user-info">
+        <span id="username">Logged in as: <strong>User</strong></span>
+        <button id="logout-btn">Logout</button>
+      </div>
+      <!-- Back to Dashboard Button -->
+      <button id="back-to-dashboard-btn" class="back-btn">
+        Back to Dashboard
+      </button>
+    </header>
+
+    <main>
+      <!-- Sorting Options -->
+      <section id="sorting-options">
+        <label for="sort-by">Sort by:</label>
+        <select id="sort-by">
+          <option value="title">Title</option>
+          <option value="genre">Genre</option>
+          <option value="date_added">Date Added</option>
+          <option value="release_date">Release Date</option>
+          <option value="duration">Duration</option>
+        </select>
+        <button id="sort-asc">Ascending</button>
+        <button id="sort-desc">Descending</button>
+      </section>
+
+      <!-- Movies Section -->
+      <section id="movies-section">
+        <h2>Movies</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Genre</th>
+              <th>Date Added</th>
+              <th>Release Date</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody id="movies-table-body">
+            <!-- Movie rows will be populated here by JavaScript -->
+          </tbody>
+        </table>
+
+        <!-- Pagination Controls -->
+        <div id="pagination-controls">
+          <button id="prev-page-btn">Previous</button>
+          <span id="current-page">Page 1</span>
+          <button id="next-page-btn">Next</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/movies.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          window.location.href = "/";
+        } else {
+          fetchUserInfo(token);
+        }
+
+        // Event listeners
+        document.getElementById("logout-btn").addEventListener("click", logout);
+        document
+          .getElementById("back-to-dashboard-btn")
+          .addEventListener("click", () => {
+            window.location.href = "dashboard.html";
+          });
+
+        // Pagination and Sorting
+        let currentPage = 1;
+        let moviesData = JSON.parse(sessionStorage.getItem("moviesData")) || [];
+        displayMovies(moviesData, currentPage);
+
+        document
+          .getElementById("next-page-btn")
+          .addEventListener("click", () => {
+            currentPage++;
+            displayMovies(moviesData, currentPage);
+          });
+
+        document
+          .getElementById("prev-page-btn")
+          .addEventListener("click", () => {
+            if (currentPage > 1) {
+              currentPage--;
+              displayMovies(moviesData, currentPage);
+            }
+          });
+
+        document.getElementById("sort-asc").addEventListener("click", () => {
+          sortMovies(moviesData, "asc");
+          displayMovies(moviesData, currentPage);
+        });
+
+        document.getElementById("sort-desc").addEventListener("click", () => {
+          sortMovies(moviesData, "desc");
+          displayMovies(moviesData, currentPage);
+        });
+
+        document.getElementById("sort-by").addEventListener("change", () => {
+          const sortBy = document.getElementById("sort-by").value;
+          sortMovies(moviesData, "asc", sortBy);
+          displayMovies(moviesData, currentPage);
+        });
+      });
+
+      // Fetch user info by decoding JWT token
+      function fetchUserInfo(token) {
+        try {
+          const user = jwt_decode(token);
+          document.getElementById("username").innerText =
+            `Logged in as: ${user.email}`;
+        } catch (error) {
+          console.error("Failed to decode user info", error);
+          window.location.href = "/";
+        }
+      }
+
+      // Handle logout
+      function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/";
+      }
+
+      // Display movies in the table
+      function displayMovies(moviesData, page) {
+        const moviesPerPage = 20;
+        const startIndex = (page - 1) * moviesPerPage;
+        const endIndex = Math.min(
+          startIndex + moviesPerPage,
+          moviesData.length,
+        );
+        const moviesTableBody = document.getElementById("movies-table-body");
+
+        moviesTableBody.innerHTML = ""; // Clear previous rows
+
+        if (moviesData.length === 0) {
+          moviesTableBody.innerHTML =
+            "<tr><td colspan='5'>No movies available.</td></tr>";
+        } else {
+          for (let i = startIndex; i < endIndex; i++) {
+            const movie = moviesData[i];
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+              <td>${movie.title}</td>
+              <td>${movie.genre}</td>
+              <td>${movie.date_added}</td>
+              <td>${movie.release_date}</td>
+              <td>${movie.duration}</td>
+            `;
+            moviesTableBody.appendChild(row);
+          }
+        }
+
+        // Update current page display
+        document.getElementById("current-page").innerText = `Page ${page}`;
+      }
+
+      // Sort movies based on selected order and property
+      function sortMovies(moviesData, order = "asc", sortBy = "title") {
+        moviesData.sort((a, b) => {
+          if (a[sortBy] < b[sortBy]) return order === "asc" ? -1 : 1;
+          if (a[sortBy] > b[sortBy]) return order === "asc" ? 1 : -1;
+          return 0;
+        });
+
+        sessionStorage.setItem("moviesData", JSON.stringify(moviesData));
+      }
+    </script>
+  </body>
+</html>

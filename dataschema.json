@@ -1,0 +1,102 @@
+{
+  "users": {
+    "indexes": ["_id"],
+    "schema": {
+      "_id": {
+        "type": "objectid"
+      },
+      "email": {
+        "type": "str"
+      },
+      "password_hash": {
+        "type": "str"
+      },
+      "full_name": {
+        "type": ["optional", "str"]
+      },
+      "is_active": {
+        "type": "boolean"
+      },
+      "last_login": {
+        "type": "Null"
+      }
+    }
+  },
+
+  "upload_status": {
+    "indexes": ["_id"],
+    "schema": {
+      "_id": {
+        "type": "objectid"
+      },
+      "file_name": {
+        "type": "string"
+      },
+      "progress": {
+        "type": "int32"
+      },
+      "status": {
+        "type": "string"
+      },
+      "task_id": {
+        "type": "string"
+      },
+      "timestamp": {
+        "type": "date"
+      },
+      "total_rows": {
+        "type": "int32"
+      },
+      "uploaded_rows": {
+        "type": "int32"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    }
+  },
+  "movies": {
+    "indexes": ["_id"],
+    "schema": {
+      "_id": {
+        "type": "objectid"
+      },
+      "cast": {
+        "type": "array -> string"
+      },
+      "country": {
+        "type": "string"
+      },
+      "date_added": {
+        "type": "date"
+      },
+      "description": {
+        "type": "string"
+      },
+      "director": {
+        "type": "string"
+      },
+      "duration": {
+        "type": "string"
+      },
+      "listed_in": {
+        "type": "array -> string"
+      },
+      "movie_type": {
+        "type": "string"
+      },
+      "rating": {
+        "type": "string"
+      },
+      "release_year": {
+        "type": "string"
+      },
+      "show_id": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      }
+    }
+  }
+}

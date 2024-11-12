@@ -1,11 +1,10 @@
 from datetime import datetime
 from typing import List, Optional
 
+from app import mongo  # Import your MongoDB connection
 from flask import g
 from pydantic import BaseModel, EmailStr
 from werkzeug.security import check_password_hash, generate_password_hash
-
-from app import mongo  # Import your MongoDB connection
 
 
 class User(BaseModel):
@@ -92,19 +91,39 @@ class Movie(BaseModel):
     @classmethod
     def from_csv(cls, row: dict) -> "Movie":
         """Create a Movie instance from a CSV row."""
-        date_added = datetime.strptime(row["date_added"], "%B %d, %Y")
+
+        # Handle missing or empty values with default options
+        date_added = (
+            datetime.strptime(row["date_added"], "%B %d, %Y")
+            if row["date_added"]
+            else None
+        )
+
+        # Optional fields: handle empty or missing data
+        release_year = int(row["release_year"]) if row["release_year"] else None
+        rating = row["rating"] if row["rating"] else None
+        duration = row["duration"] if row["duration"] else None
+
         return cls(
             show_id=row["show_id"],
-            movie_type=row["type"],
+            movie_type=row["type"],  # 'type' is mapped to 'movie_type'
             title=row["title"],
             director=row["director"],
-            cast=[actor.strip() for actor in row["cast"].split(",")],
+            cast=(
+                [actor.strip() for actor in row["cast"].split(",")]
+                if row["cast"]
+                else []
+            ),
             country=row["country"],
             date_added=date_added,
-            release_year=int(row["release_year"]),
-            rating=row["rating"],
-            duration=row["duration"],
-            listed_in=[genre.strip() for genre in row["listed_in"].split(",")],
+            release_year=release_year,
+            rating=rating,
+            duration=duration,
+            listed_in=(
+                [genre.strip() for genre in row["listed_in"].split(",")]
+                if row["listed_in"]
+                else []
+            ),
             description=row["description"],
         )
 

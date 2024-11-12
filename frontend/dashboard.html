@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Dashboard</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Welcome to the Movie Dashboard</h1>
+      <div id="user-info">
+        <span id="username">Logged in as: <strong>User</strong></span>
+        <button id="logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- CSV Upload Section -->
+      <section id="upload-section">
+        <h2>Upload Movie Data (CSV)</h2>
+        <form id="csv-upload-form" enctype="multipart/form-data">
+          <label for="csv-file">Select CSV File:</label>
+          <input type="file" name="file" id="csv-file-input" />
+          <button type="submit" id="upload-btn">Upload CSV</button>
+        </form>
+        <div id="upload-progress" style="display: none">
+          <p>Progress: <span id="upload-status">0%</span></p>
+          <p>Uploading...</p>
+        </div>
+      </section>
+
+      <!-- Movies Section -->
+      <section id="movies-section">
+        <h2>Movies</h2>
+
+        <!-- Sorting Options -->
+        <div id="sorting-options">
+          <label for="sort-by">Sort by:</label>
+          <select id="sort-by">
+            <option value="date_added">Date Added</option>
+            <option value="release_date">Release Date</option>
+            <option value="duration">Duration</option>
+          </select>
+
+          <label for="sort-order">Order:</label>
+          <select id="sort-order">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </div>
+
+        <!-- Fetch Movies Button -->
+        <button id="fetch-movies-btn">Fetch Movies</button>
+
+        <!-- Movie List -->
+        <ul id="movie-list"></ul>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/upload.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/movies.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          window.location.href = "/";
+        } else {
+          fetchUserInfo(token);
+        }
+
+        document.getElementById("logout-btn").addEventListener("click", logout);
+
+        // Fetch movies when button is clicked
+        document
+          .getElementById("fetch-movies-btn")
+          .addEventListener("click", () => fetchMovies());
+      });
+
+      function fetchUserInfo(token) {
+        try {
+          const user = jwt_decode(token);
+          document.getElementById("username").innerText =
+            `Logged in as: ${user.email}`;
+        } catch (error) {
+          console.error("Failed to decode user info", error);
+          window.location.href = "/";
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/";
+      }
+
+      function fetchMovies() {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          alert("Please log in first.");
+          window.location.href = "/";
+          return;
+        }
+
+        const sortBy = document.getElementById("sort-by").value;
+        const sortOrder = document.getElementById("sort-order").value;
+
+        // Fetch movies from the API with sorting query parameters
+        fetch(
+          `http://127.0.0.1:5000/movies/movie_dashboard?sort_by=${sortBy}&sort_order=${sortOrder}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.movies) {
+              // Store the movies in sessionStorage
+              sessionStorage.setItem("moviesData", JSON.stringify(data.movies));
+
+              // Redirect to movies.html after fetching data
+              window.location.href = "movies.html";
+            } else {
+              alert("No movies found.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching movies:", error);
+            alert("Failed to fetch movies. Please try again.");
+          });
+      }
+      function storeMoviesData(movies) {
+        // Convert the movies data to a JSON string and store it in sessionStorage
+        sessionStorage.setItem("moviesData", JSON.stringify({ movies }));
+      }
+
+      // Example of fetching and storing data (replace with actual fetch logic)
+      document.addEventListener("DOMContentLoaded", async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          window.location.href = "/";
+        }
+
+        // Fetch movies (replace this with actual fetch logic)
+        const response = await fetch("/api/movies", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const moviesData = await response.json();
+
+        // Store movies data in sessionStorage
+        storeMoviesData(moviesData.movies);
+      });
+    </script>
+  </body>
+</html>
